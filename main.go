@@ -147,8 +147,9 @@ func printInterfaces(
 	lastOutSpeed map[int]uint64,
 	interval int,
 ) {
-	fmt.Println(strings.Repeat("-", 64))
-	fmt.Println(time.Now().Format("2006-01-02 15:04:05"))
+	fmt.Printf("Time: %s\n\n", time.Now().Format("15:04:05"))
+	fmt.Printf("%-24s %-8s %-10s %-10s\n", "Interface", "Status", "IN", "OUT")
+	fmt.Println(strings.Repeat("-", 60))
 
 	indices := make([]int, 0, len(current))
 	for idx := range current {
@@ -208,6 +209,9 @@ func printInterfaces(
 		if name == "" {
 			name = fmt.Sprintf("if%d", cur.Index)
 		}
+		if shouldSkipInterface(name) {
+			continue
+		}
 		name = shortName(name, 40)
 
 		row := rows[name]
@@ -230,7 +234,7 @@ func printInterfaces(
 
 	for _, name := range names {
 		row := rows[name]
-		fmt.Printf("%-40s | %-4s | IN: %-10s | OUT: %-10s\n",
+		fmt.Printf("%-24s %-8s %-10s %-10s\n",
 			row.Name,
 			row.Status,
 			formatSpeed(row.In),
@@ -296,4 +300,15 @@ func shortName(name string, max int) string {
 		return name
 	}
 	return name[:max-3] + "..."
+}
+
+func shouldSkipInterface(name string) bool {
+	n := strings.ToLower(strings.TrimSpace(name))
+	if n == "" {
+		return true
+	}
+	if n == "lo" || n == "lo0" {
+		return true
+	}
+	return strings.HasPrefix(n, "veth") || strings.HasPrefix(n, "br-")
 }
